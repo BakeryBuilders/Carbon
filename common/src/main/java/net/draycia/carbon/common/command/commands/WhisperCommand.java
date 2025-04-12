@@ -175,6 +175,11 @@ public final class WhisperCommand extends CarbonCommand {
                 return;
             }
 
+            if (!sender.hasPermission("carbon.whisper.send")) {
+                this.messages.whisperNoPermissionSend(sender);
+                return;
+            }
+
             final String recipientUsername = recipient.username();
             if (!this.network.online(recipient) || !sender.awareOf(recipient) && !sender.hasPermission("carbon.whisper.vanished")) {
                 final var exception = new CarbonPlayerParser.ParseException(
@@ -217,16 +222,24 @@ public final class WhisperCommand extends CarbonCommand {
             message.sendMessage(
                 sender,
                 ChatType.chatType(this.rawChatKey),
-                this.messages.whisperSender(SourcedAudience.of(sender, sender), senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, privateChatEvent.message())
+                this.messages.whisperSender(SourcedAudience.of(sender, sender), senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, recipient.uuid(), privateChatEvent.message())
             );
             if (localRecipient) {
+                if (!recipient.hasPermission("carbon.whisper.receive")) {
+                    this.messages.whisperNoPermissionReceive(sender);
+                    return;
+                }
+
                 message.sendMessage(
                     recipient,
                     ChatType.chatType(this.rawChatKey),
-                    this.messages.whisperRecipient(SourcedAudience.of(sender, recipient), senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, privateChatEvent.message())
+                    this.messages.whisperRecipient(SourcedAudience.of(sender, recipient), senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, recipient.uuid(), privateChatEvent.message())
                 );
             }
-            this.messages.whisperConsoleLog(this.server.console(), senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, privateChatEvent.message());
+            WhisperCommand.broadcastWhisperSpy(this.server, this.messages, senderUsername, senderDisplayName,
+                recipientUsername, recipientDisplayName, privateChatEvent.message());
+            this.messages.whisperConsoleLog(this.server.console(), senderUsername, senderDisplayName,
+                recipientUsername, recipientDisplayName, privateChatEvent.message());
 
             final @Nullable Sound messageSound = this.configManager.primaryConfig().messageSound();
             if (localRecipient && messageSound != null) {
@@ -256,10 +269,16 @@ public final class WhisperCommand extends CarbonCommand {
                 final String recipientUsername = recipient.username();
                 final Component recipientDisplayName = recipient.displayName();
 
+                if (!recipient.hasPermission("carbon.whisper.receive")) {
+                    this.messages.whisperNoPermissionReceive(sender);
+                    return;
+                }
+
                 recipient.whisperReplyTarget(sender.uuid());
                 SourcedAudience.of(sender, recipient).sendMessage(
-                    this.messages.whisperRecipient(SourcedAudience.of(sender, recipient), senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, packet.message())
+                    this.messages.whisperRecipient(SourcedAudience.of(sender, recipient), senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, recipient.uuid(), packet.message())
                 );
+                WhisperCommand.broadcastWhisperSpy(this.server, this.messages, senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, packet.message());
                 this.messages.whisperConsoleLog(this.server.console(), senderUsername, senderDisplayName, recipientUsername, recipientDisplayName, packet.message());
                 final @Nullable Sound messageSound = this.configManager.primaryConfig().messageSound();
                 if (messageSound != null) {
@@ -269,6 +288,23 @@ public final class WhisperCommand extends CarbonCommand {
                 this.logger.warn("Failed to handle whisper packet {}", packet, ex);
                 return null;
             });
+        }
+    }
+
+    public static void broadcastWhisperSpy(
+        final CarbonServer server,
+        final CarbonMessages messages,
+        final String senderUsername,
+        final Component senderDisplayName,
+        final String recipientUsername,
+        final Component recipientDisplayName,
+        final Component message
+    ) {
+        for (final CarbonPlayer player : server.players()) {
+            if (player.spying() && !player.username().equals(senderUsername) && !player.username().equals(recipientUsername)) {
+                messages.whisperRecipientSpy(player, senderUsername,
+                    senderDisplayName, recipientUsername, recipientDisplayName, message);
+            }
         }
     }
 

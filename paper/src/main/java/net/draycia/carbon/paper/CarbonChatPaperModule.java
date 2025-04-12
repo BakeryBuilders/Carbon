@@ -41,8 +41,11 @@ import net.draycia.carbon.common.users.ProfileResolver;
 import net.draycia.carbon.common.util.CloudUtils;
 import net.draycia.carbon.paper.command.PaperCommander;
 import net.draycia.carbon.paper.command.PaperPlayerCommander;
+import net.draycia.carbon.paper.integration.dsrv.DSRVIntegration;
+import net.draycia.carbon.paper.integration.essxd.EssXDIntegration;
 import net.draycia.carbon.paper.integration.fuuid.FactionsIntegration;
 import net.draycia.carbon.paper.integration.mcmmo.McmmoIntegration;
+import net.draycia.carbon.paper.integration.plotsquared.PlotSquaredIntegration;
 import net.draycia.carbon.paper.integration.towny.TownyIntegration;
 import net.draycia.carbon.paper.listeners.PaperChatListener;
 import net.draycia.carbon.paper.listeners.PaperPlayerJoinListener;
@@ -126,6 +129,15 @@ public final class CarbonChatPaperModule extends CarbonPlatformModule {
 
         integrations.addBinding().to(FactionsIntegration.class);
         configs.addBinding().toInstance(FactionsIntegration.configMeta());
+
+        integrations.addBinding().to(EssXDIntegration.class);
+        configs.addBinding().toInstance(EssXDIntegration.configMeta());
+
+        integrations.addBinding().to(DSRVIntegration.class);
+        configs.addBinding().toInstance(DSRVIntegration.configMeta());
+
+        integrations.addBinding().to(PlotSquaredIntegration.class);
+        configs.addBinding().toInstance(PlotSquaredIntegration.configMeta());
     }
 
     private void configureListeners() {

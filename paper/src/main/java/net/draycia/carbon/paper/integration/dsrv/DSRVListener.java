@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.draycia.carbon.paper.hooks;
+package net.draycia.carbon.paper.integration.dsrv;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -42,37 +42,44 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.logging.log4j.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public final class DSRVChatHook implements ChatHook {
+public final class DSRVListener implements ChatHook {
 
     private final CarbonChannelRegistry channelRegistry;
     private final JavaPlugin plugin;
+    private final CarbonEventHandler eventHandler;
 
     @Inject
-    private DSRVChatHook(
-        final CarbonEventHandler events,
+    private DSRVListener(
+        final CarbonEventHandler eventHandler,
         final CarbonChannelRegistry channelRegistry,
-        final JavaPlugin plugin,
-        final Logger logger
+        final JavaPlugin plugin
     ) {
         this.channelRegistry = channelRegistry;
+        this.eventHandler = eventHandler;
         this.plugin = plugin;
-        logger.info("DiscordSRV found! Enabling hook.");
+    }
+
+    public void register() {
+        DiscordSRV.getPlugin().getPluginHooks().add(this);
 
         final Cache<ImmutablePair<CarbonPlayer, ChatChannel>, Component> awaitingEvent = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofMillis(25))
             .build();
 
-        events.subscribe(CarbonChatEvent.class, 100, false, event -> {
+        this.eventHandler.subscribe(CarbonChatEvent.class, 100, false, event -> {
             final ChatChannel chatChannel = event.chatChannel();
             final CarbonPlayer carbonPlayer = event.sender();
 
             if (carbonPlayer instanceof ConsoleCarbonPlayer) {
+                return;
+            }
+
+            if (carbonPlayer.muted()) {
                 return;
             }
 
@@ -98,7 +105,7 @@ public final class DSRVChatHook implements ChatHook {
             final @Nullable Player player = ((CarbonPlayerPaper) carbonPlayer).bukkitPlayer();
 
             if (player != null) {
-                DiscordSRV.getPlugin().processChatMessage(player, toDsrv(eventMessage), chatChannel.commandName(), event.cancelled(), null);
+                DiscordSRV.getPlugin().processChatMessage(player, this.toDsrv(eventMessage), chatChannel.commandName(), event.cancelled(), null);
             }
         });
 
@@ -121,25 +128,25 @@ public final class DSRVChatHook implements ChatHook {
         if (chatChannel == null) {
             this.plugin.getLogger().warning("Error sending message from Discord to Minecraft, no matching channel found for [" + channel + "]");
         } else {
-            ChannelUtils.broadcastMessageToChannel(fromDsrv(message), chatChannel);
+            ChannelUtils.broadcastMessageToChannel(this.fromDsrv(message), chatChannel);
         }
     }
 
-    @Override
-    public Plugin getPlugin() {
-        return this.plugin;
-    }
-
-    private static github.scarsz.discordsrv.dependencies.kyori.adventure.text.Component toDsrv(final Component component) {
+    private github.scarsz.discordsrv.dependencies.kyori.adventure.text.Component toDsrv(final Component component) {
         return github.scarsz.discordsrv.dependencies.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson().deserialize(
             GsonComponentSerializer.gson().serialize(component)
         );
     }
 
-    private static Component fromDsrv(final github.scarsz.discordsrv.dependencies.kyori.adventure.text.Component component) {
+    private Component fromDsrv(final github.scarsz.discordsrv.dependencies.kyori.adventure.text.Component component) {
         return GsonComponentSerializer.gson().deserialize(
             github.scarsz.discordsrv.dependencies.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson().serialize(component)
         );
+    }
+
+    @Override
+    public Plugin getPlugin() {
+        return this.plugin;
     }
 
 }

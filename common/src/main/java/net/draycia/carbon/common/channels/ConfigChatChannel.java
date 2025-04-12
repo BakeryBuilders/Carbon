@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import net.draycia.carbon.api.CarbonServer;
-import net.draycia.carbon.api.channels.ChannelPermissionResult;
+import net.draycia.carbon.api.channels.ChannelPermissions;
 import net.draycia.carbon.api.channels.ChatChannel;
 import net.draycia.carbon.api.users.CarbonPlayer;
 import net.draycia.carbon.common.channels.messages.ConfigChannelMessageSource;
@@ -64,7 +64,6 @@ import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import static java.util.Objects.requireNonNull;
-import static net.draycia.carbon.api.channels.ChannelPermissionResult.channelPermissionResult;
 
 @ConfigSerializable
 @DefaultQualifier(NonNull.class)
@@ -118,6 +117,9 @@ public class ConfigChatChannel implements ChatChannel {
 
     private long cooldown = -1;
 
+    @Comment("Whether this channel's messages should be sent cross-server.")
+    private boolean crossServer = true;
+
     @Override
     public @Nullable String quickPrefix() {
         if (this.quickPrefix == null || this.quickPrefix.isBlank()) {
@@ -161,19 +163,8 @@ public class ConfigChatChannel implements ChatChannel {
     }
 
     @Override
-    public ChannelPermissionResult speechPermitted(final CarbonPlayer player) {
-        return channelPermissionResult(
-            player.hasPermission(this.permission() + ".speak"),
-            () -> this.messages.channelNoPermission(player)
-        );
-    }
-
-    @Override
-    public ChannelPermissionResult hearingPermitted(final CarbonPlayer player) {
-        return channelPermissionResult(
-            player.hasPermission(this.permission() + ".see") && !player.leftChannels().contains(this.key),
-            () -> this.messages.channelNoPermission(player)
-        );
+    public ChannelPermissions permissions() {
+        return new ChannelPermissionsImpl(this.permission(), this.messages);
     }
 
     @Override
@@ -181,7 +172,7 @@ public class ConfigChatChannel implements ChatChannel {
         final List<Audience> recipients = new ArrayList<>();
 
         for (final CarbonPlayer player : this.server.players()) {
-            if (this.hearingPermitted(player).permitted()) {
+            if (this.permissions().hearingPermitted(player).permitted() && !player.leftChannels().contains(this.key)) {
                 recipients.add(player);
             }
         }
@@ -257,8 +248,7 @@ public class ConfigChatChannel implements ChatChannel {
         return requireNonNull(this.carbonMessages, "Channel message service must not be null!");
     }
 
-    @Override
-    public String permission() {
+    private String permission() {
         if (this.permission == null) {
             return "carbon.channel." + this.key().value();
         }
@@ -274,6 +264,11 @@ public class ConfigChatChannel implements ChatChannel {
     @Override
     public boolean emptyRadiusRecipientsMessage() {
         return this.emptyRadiusRecipientsMessage;
+    }
+
+    @Override
+    public boolean shouldCrossServer() {
+        return this.crossServer;
     }
 
     @Override

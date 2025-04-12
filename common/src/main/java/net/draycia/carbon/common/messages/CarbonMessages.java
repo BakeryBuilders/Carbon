@@ -19,7 +19,9 @@
  */
 package net.draycia.carbon.common.messages;
 
+import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.moonshine.annotation.Message;
 import net.kyori.moonshine.annotation.Placeholder;
@@ -37,6 +39,16 @@ public interface CarbonMessages {
 
     @Message("channel.radius.empty_recipients")
     void emptyRecipients(final Audience audience);
+
+    @Message("channel.radius.spy")
+    void radiusSpy(
+        Audience audience,
+        @Placeholder UUID uuid,
+        @Placeholder Key channel,
+        @Placeholder("display_name") Component displayName,
+        @Placeholder String username,
+        @Placeholder Component message
+    );
 
     @Message("channel.not_found")
     void channelNotFound(final Audience audience);
@@ -104,6 +116,18 @@ public interface CarbonMessages {
     @Message("mute.spy.prefix")
     Component muteSpyPrefix(final Audience audience);
 
+    @Message("mute.alert.target.temp")
+    void tempMuteAlertRecipient(final Audience audience, final Component duration);
+
+    @Message("mute.alert.players.temp")
+    void tempMuteAlertPlayers(final Audience audience, final Component target, final Component duration);
+
+    @Message("duration.hours")
+    Component durationHours(final int hours, final int minutes, final int seconds);
+
+    @Message("duration.days")
+    Component durationDays(final long days, final int hours, final int minutes, final int seconds);
+
     /*
      * =============================================================
      * ====================== Direct Messages ======================
@@ -117,12 +141,24 @@ public interface CarbonMessages {
         Component senderDisplayName,
         String recipientUsername,
         Component recipientDisplayName,
+        UUID recipientUuid,
         Component message
     );
 
     @Message("whisper.from")
     Component whisperRecipient(
         @NotPlaceholder SourcedAudience audience,
+        String senderUsername,
+        Component senderDisplayName,
+        String recipientUsername,
+        Component recipientDisplayName,
+        UUID recipientUuid,
+        Component message
+    );
+
+    @Message("whisper.from.spy")
+    void whisperRecipientSpy(
+        Audience audience,
         String senderUsername,
         Component senderDisplayName,
         String recipientUsername,
@@ -176,6 +212,12 @@ public interface CarbonMessages {
 
     @Message("whisper.toggled.off")
     void whispersToggledOff(final Audience audience);
+
+    @Message("whisper.no_permission.send")
+    void whisperNoPermissionSend(final Audience audience);
+
+    @Message("whisper.no_permission.receive")
+    void whisperNoPermissionReceive(final Audience audience);
 
     /*
      * =============================================================
@@ -256,6 +298,36 @@ public interface CarbonMessages {
 
     @Message("config.reload.failed")
     void configReloadFailed(final Audience audience);
+
+    /*
+     * =============================================================
+     * ========================== Spying ===========================
+     * =============================================================
+     */
+
+    @Message("command.spy.enabled")
+    void commandSpyEnabled(final Audience audience);
+
+    @Message("command.spy.disabled")
+    void commandSpyDisabled(final Audience audience);
+
+    @Message("command.spy.description")
+    Component commandSpyDescription();
+
+    /*
+     * =============================================================
+     * ========================== Filters ==========================
+     * =============================================================
+     */
+
+    @Message("command.filter.optional.enabled")
+    void commandOptionalFilterEnabled(final Audience audience);
+
+    @Message("command.filter.optional.disabled")
+    void commandOptionalFilterDisabled(final Audience audience);
+
+    @Message("command.filter.optional.description")
+    Component commandOptionalFilterDescription();
 
     /*
      * =============================================================
@@ -344,6 +416,9 @@ public interface CarbonMessages {
 
     @Message("command.mute.argument.player")
     Component commandMuteArgumentPlayer();
+
+    @Message("command.mute.argument.duration")
+    Component commandMuteArgumentDuration();
 
     @Message("command.mute.argument.uuid")
     Component commandMuteArgumentUUID();
@@ -525,6 +600,16 @@ public interface CarbonMessages {
     @Message("party.cannot_use_channel")
     Component cannotUsePartyChannel(Audience audience);
 
+    @Message("party.spy")
+    void partySpy(
+        Audience audience,
+        @Placeholder UUID uuid,
+        @Placeholder("display_name") Component displayName,
+        @Placeholder String username,
+        @Placeholder Component message,
+        @Placeholder("party_name") Component partyName
+    );
+
     @Message("deletemessage.prefix")
     Component deleteMessagePrefix();
 
@@ -566,4 +651,11 @@ public interface CarbonMessages {
 
     @Message("integrations.fuuid.cannot_use_truce_channel")
     Component cannotUseTruceChannel(Audience audience);
+
+    @Message("integrations.fuuid.cannot_use_mod_channel")
+    Component cannotUseFactionModChannel(Audience audience);
+
+    @Message("integrations.plotsquared.cannot_use_plot_channel")
+    Component cannotUsePlotChannel(Audience audience);
+
 }

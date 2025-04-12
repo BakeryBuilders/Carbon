@@ -248,7 +248,7 @@ public abstract class WrappedCarbonPlayer implements CarbonPlayer {
                 continue;
             }
 
-            if (text.startsWith(prefix) && chatChannel.speechPermitted(this).permitted()) {
+            if (text.startsWith(prefix) && chatChannel.permissions().speechPermitted(this).permitted()) {
                 channel = chatChannel;
                 formattedMessage = formattedMessage.replaceText(TextReplacementConfig.builder()
                     .once()
@@ -280,6 +280,16 @@ public abstract class WrappedCarbonPlayer implements CarbonPlayer {
     @Override
     public void muted(final boolean muted) {
         this.carbonPlayerCommon.muted(muted);
+    }
+
+    @Override
+    public long muteExpiration() {
+        return this.carbonPlayerCommon.muteExpiration();
+    }
+
+    @Override
+    public void muteExpiration(final long epochMillis) {
+        this.carbonPlayerCommon.muteExpiration(epochMillis);
     }
 
     @Override
@@ -384,6 +394,16 @@ public abstract class WrappedCarbonPlayer implements CarbonPlayer {
 
     public void party(final @Nullable Party party) {
         this.carbonPlayerCommon.party(party);
+    }
+
+    @Override
+    public boolean applyOptionalChatFilters() {
+        return this.carbonPlayerCommon.applyOptionalChatFilters();
+    }
+
+    @Override
+    public void applyOptionalChatFilters(final boolean applyOptionalChatFilters) {
+        this.carbonPlayerCommon.applyOptionalChatFilters(applyOptionalChatFilters);
     }
 
 }

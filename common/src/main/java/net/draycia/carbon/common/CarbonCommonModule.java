@@ -47,6 +47,7 @@ import net.draycia.carbon.common.command.argument.PlayerSuggestions;
 import net.draycia.carbon.common.command.commands.ClearChatCommand;
 import net.draycia.carbon.common.command.commands.ContinueCommand;
 import net.draycia.carbon.common.command.commands.DebugCommand;
+import net.draycia.carbon.common.command.commands.FilterCommand;
 import net.draycia.carbon.common.command.commands.HelpCommand;
 import net.draycia.carbon.common.command.commands.IgnoreCommand;
 import net.draycia.carbon.common.command.commands.IgnoreListCommand;
@@ -58,6 +59,7 @@ import net.draycia.carbon.common.command.commands.NicknameCommand;
 import net.draycia.carbon.common.command.commands.PartyCommands;
 import net.draycia.carbon.common.command.commands.ReloadCommand;
 import net.draycia.carbon.common.command.commands.ReplyCommand;
+import net.draycia.carbon.common.command.commands.SpyCommand;
 import net.draycia.carbon.common.command.commands.ToggleMessagesCommand;
 import net.draycia.carbon.common.command.commands.UnignoreCommand;
 import net.draycia.carbon.common.command.commands.UnmuteCommand;
@@ -67,12 +69,15 @@ import net.draycia.carbon.common.config.ConfigManager;
 import net.draycia.carbon.common.config.DatabaseSettings;
 import net.draycia.carbon.common.event.CarbonEventHandlerImpl;
 import net.draycia.carbon.common.listeners.DeafenHandler;
+import net.draycia.carbon.common.listeners.FilterHandler;
 import net.draycia.carbon.common.listeners.HyperlinkHandler;
 import net.draycia.carbon.common.listeners.IgnoreHandler;
 import net.draycia.carbon.common.listeners.ItemLinkHandler;
 import net.draycia.carbon.common.listeners.Listener;
 import net.draycia.carbon.common.listeners.MessagePacketHandler;
 import net.draycia.carbon.common.listeners.MuteHandler;
+import net.draycia.carbon.common.listeners.PartyChatSpyHandler;
+import net.draycia.carbon.common.listeners.PartyPingHandler;
 import net.draycia.carbon.common.listeners.PingHandler;
 import net.draycia.carbon.common.listeners.RadiusListener;
 import net.draycia.carbon.common.messages.CarbonMessageRenderer;
@@ -80,6 +85,7 @@ import net.draycia.carbon.common.messages.CarbonMessageSender;
 import net.draycia.carbon.common.messages.CarbonMessageSource;
 import net.draycia.carbon.common.messages.CarbonMessages;
 import net.draycia.carbon.common.messages.Option;
+import net.draycia.carbon.common.messages.RenderForTagResolver;
 import net.draycia.carbon.common.messages.SourcedReceiverResolver;
 import net.draycia.carbon.common.messages.StandardPlaceholderResolverStrategyButDifferent;
 import net.draycia.carbon.common.messages.placeholders.BooleanPlaceholderResolver;
@@ -200,6 +206,7 @@ public final class CarbonCommonModule extends AbstractModule {
     @Override
     protected void configure() {
         this.install(new FactoryModuleBuilder().build(ParserFactory.class));
+        this.install(new FactoryModuleBuilder().build(RenderForTagResolver.Factory.class));
         this.install(factoryModule(PacketFactory.class));
         this.bind(ServerId.KEY).toInstance(UUID.randomUUID());
         this.bind(ChannelRegistry.class).to(CarbonChannelRegistry.class);
@@ -215,11 +222,14 @@ public final class CarbonCommonModule extends AbstractModule {
     private void configureListeners() {
         final Multibinder<Listener> listeners = Multibinder.newSetBinder(this.binder(), Listener.class);
         listeners.addBinding().to(DeafenHandler.class);
+        listeners.addBinding().to(FilterHandler.class);
         listeners.addBinding().to(HyperlinkHandler.class);
         listeners.addBinding().to(IgnoreHandler.class);
         listeners.addBinding().to(ItemLinkHandler.class);
         listeners.addBinding().to(MessagePacketHandler.class);
         listeners.addBinding().to(MuteHandler.class);
+        listeners.addBinding().to(PartyChatSpyHandler.class);
+        listeners.addBinding().to(PartyPingHandler.class);
         listeners.addBinding().to(PingHandler.class);
         listeners.addBinding().to(RadiusListener.class);
     }
@@ -231,6 +241,7 @@ public final class CarbonCommonModule extends AbstractModule {
         commands.addBinding().to(ClearChatCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(ContinueCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(DebugCommand.class).in(Scopes.SINGLETON);
+        commands.addBinding().to(FilterCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(HelpCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(IgnoreCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(MuteCommand.class).in(Scopes.SINGLETON);
@@ -238,6 +249,7 @@ public final class CarbonCommonModule extends AbstractModule {
         commands.addBinding().to(NicknameCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(ReloadCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(ReplyCommand.class).in(Scopes.SINGLETON);
+        commands.addBinding().to(SpyCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(ToggleMessagesCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(UnignoreCommand.class).in(Scopes.SINGLETON);
         commands.addBinding().to(UnmuteCommand.class).in(Scopes.SINGLETON);

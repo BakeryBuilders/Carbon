@@ -51,12 +51,16 @@ public class MessagePacketHandler implements Listener {
                 return;
             }
 
+            if (!event.chatChannel().shouldCrossServer()) {
+                return;
+            }
+
             messaging.get().queuePacket(() -> {
                 final CarbonPlayer sender = event.sender();
                 final Component networkMessage = e.renderFor(sender);
 
                 return new ChatMessagePacket(serverId, sender.uuid(),
-                    event.chatChannel().permission(), event.chatChannel().key(), sender.username(), networkMessage);
+                    event.chatChannel().key(), sender.username(), networkMessage);
             });
         });
     }

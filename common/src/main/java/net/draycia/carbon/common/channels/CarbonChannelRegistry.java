@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import net.draycia.carbon.api.channels.ChannelPermissions;
 import net.draycia.carbon.api.channels.ChannelRegistry;
 import net.draycia.carbon.api.channels.ChatChannel;
 import net.draycia.carbon.api.event.CarbonEventHandler;
@@ -72,6 +73,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.minecraft.signed.SignedString;
+import org.incendo.cloud.permission.PredicatePermission;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
@@ -363,15 +365,13 @@ public class CarbonChannelRegistry extends ChatListenerInternal implements Chann
                 channel.commandAliases(), commandManager.createDefaultCommandMeta())
             .optional("message", signedGreedyStringParser());
 
-        if (channel.permission() != null) {
-            builder = builder.permission(channel.permission());
-
-            // Add to LuckPerms permission suggestions... lol
-            //this.carbonChat.server().console().get(PermissionChecker.POINTER).ifPresent(checker -> {
-            //    checker.test(channel.permission());
-            //    checker.test(channel.permission() + ".see");
-            //    checker.test(channel.permission() + ".speak");
-            //});
+        if (!channel.permissions().dynamic()) {
+            builder = builder.permission(PredicatePermission.of(sender -> {
+                if (!(sender instanceof PlayerCommander player)) {
+                    return true;
+                }
+                return channel.permissions().joinPermitted(player.carbonPlayer()).permitted();
+            }));
         }
 
         final Key channelKey = channel.key();
@@ -515,6 +515,11 @@ public class CarbonChannelRegistry extends ChatListenerInternal implements Chann
                 }
             }
         );
+    }
+
+    @Override
+    public ChannelPermissions permission(final String permission) {
+        return new ChannelPermissionsImpl(permission, this.carbonMessages);
     }
 
 }

@@ -17,14 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.draycia.carbon.paper.listeners;
+package net.draycia.carbon.paper.integration.essxd;
 
 import com.google.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import net.draycia.carbon.api.CarbonChat;
 import net.essentialsx.api.v2.events.discord.DiscordMessageEvent;
-import net.essentialsx.api.v2.events.discord.DiscordRelayEvent;
 import net.essentialsx.api.v2.services.discord.DiscordService;
 import net.essentialsx.api.v2.services.discord.MessageType;
 import net.kyori.adventure.key.Key;
@@ -35,21 +34,22 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public final class DiscordMessageListener implements Listener {
+public final class EssXDListener implements Listener {
 
     private final CarbonChat carbonChat;
     private final JavaPlugin plugin;
     private final Map<Key, MessageType> channelMessageTypes = new HashMap<>();
+    private final Logger logger;
 
     @Inject
-    private DiscordMessageListener(
+    private EssXDListener(
         final JavaPlugin plugin,
         final CarbonChat carbonChat,
         final Logger logger
     ) {
         this.plugin = plugin;
         this.carbonChat = carbonChat;
-        logger.info("EssentialsXDiscord found! Enabling hook.");
+        this.logger = logger;
     }
 
     // Minecraft -> Discord
@@ -72,17 +72,19 @@ public final class DiscordMessageListener implements Listener {
         event.setType(messageType);
     }
 
-    @EventHandler
-    public void onDiscordMessage(final DiscordRelayEvent event) {
-    }
+    public void register() {
+        Bukkit.getPluginManager().registerEvents(this, this.plugin);
 
-    public void init() {
         final @Nullable DiscordService discord = Bukkit.getServicesManager().load(DiscordService.class);
 
         if (discord != null) {
             this.carbonChat.channelRegistry().allKeys(key -> {
                 final MessageType channelMessageType = new MessageType(key.value());
-                discord.registerMessageType(this.plugin, channelMessageType);
+                try {
+                    discord.registerMessageType(this.plugin, channelMessageType);
+                } catch (final IllegalArgumentException exception) {
+                    this.logger.info("Skipping registration of message type [{}]", channelMessageType);
+                }
                 this.channelMessageTypes.put(key, channelMessageType);
             });
         }

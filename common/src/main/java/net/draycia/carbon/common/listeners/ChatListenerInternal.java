@@ -70,7 +70,7 @@ public abstract class ChatListenerInternal {
     }
 
     protected @Nullable CarbonChatEventImpl prepareAndEmitChatEvent(final CarbonPlayer sender, final String messageContent, final @Nullable SignedMessage signedMessage, final ChatChannel channel) {
-        final ChannelPermissionResult permitted = channel.speechPermitted(sender);
+        final ChannelPermissionResult permitted = channel.permissions().speechPermitted(sender);
         if (!permitted.permitted()) {
             sender.sendMessage(permitted.reason());
             return null;
@@ -91,7 +91,6 @@ public abstract class ChatListenerInternal {
         }
         
         String content = this.configManager.primaryConfig().applyChatPlaceholders(messageContent);
-        content = this.configManager.primaryConfig().applyChatFilters(content);
 
         final CarbonEarlyChatEvent earlyChatEvent = new CarbonEarlyChatEvent(sender, content);
         this.carbonEventHandler.emit(earlyChatEvent);

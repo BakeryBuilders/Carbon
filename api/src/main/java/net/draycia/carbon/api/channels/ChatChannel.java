@@ -24,7 +24,6 @@ import net.draycia.carbon.api.users.CarbonPlayer;
 import net.draycia.carbon.api.util.ChatComponentRenderer;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.key.Keyed;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -39,22 +38,12 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 public interface ChatChannel extends Keyed, ChatComponentRenderer {
 
     /**
-     * Checks if the player may send messages in this channel.
+     * Returns the permissions handler for the channel.
      *
-     * @param carbonPlayer the player attempting to speak
-     * @return if the player may speak
+     * @return the permissions handler
      * @since 3.0.0
      */
-    ChannelPermissionResult speechPermitted(CarbonPlayer carbonPlayer);
-
-    /**
-     * Checks if the player may receive messages from this channel.
-     *
-     * @param player the player that's receiving messages
-     * @return if the player may receive messages
-     * @since 3.0.0
-     */
-    ChannelPermissionResult hearingPermitted(CarbonPlayer player);
+    ChannelPermissions permissions();
 
     /**
      * Returns a list of all recipients that will receive messages from the sender.
@@ -96,15 +85,6 @@ public interface ChatChannel extends Keyed, ChatComponentRenderer {
      * @since 2.0.0
      */
     List<String> commandAliases();
-
-    /**
-     * The base permission players must have in order to use the channel.<br>
-     * Null return means players do not need any permission.
-     *
-     * @return the permission required to use the channel, or null
-     * @since 2.0.7
-     */
-    @MonotonicNonNull String permission();
 
     /**
      * The distance from the sender players must be to receive chat messages.<br>
@@ -151,5 +131,13 @@ public interface ChatChannel extends Keyed, ChatComponentRenderer {
      * @since 3.0.0
      */
     long startCooldown(CarbonPlayer player);
+
+    /**
+     * Whether messages from this channel should be broadcast and sent to other servers.
+     *
+     * @return if this channel's messages should be sent cross-server
+     * @since 3.0.0
+     */
+    boolean shouldCrossServer();
 
 }

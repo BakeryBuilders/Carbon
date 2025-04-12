@@ -79,10 +79,9 @@ publishMods.modrinth {
   requires("luckperms")
   optional("miniplaceholders")
   minecraftVersions.addAll(
-    "1.20.4",
-    "1.20.5",
     "1.20.6",
     "1.21",
+    "1.21.1",
   )
 }
 

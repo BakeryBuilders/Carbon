@@ -20,13 +20,12 @@
 package net.draycia.carbon.paper.integration.mcmmo;
 
 import com.gmail.nossr50.datatypes.party.Party;
-import com.gmail.nossr50.party.PartyManager;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import net.draycia.carbon.api.channels.ChannelPermissionResult;
+import net.draycia.carbon.api.channels.ChannelPermissions;
 import net.draycia.carbon.api.users.CarbonPlayer;
 import net.draycia.carbon.api.users.UserManager;
 import net.draycia.carbon.common.channels.ConfigChatChannel;
@@ -65,19 +64,11 @@ public class McmmoPartyChannel extends ConfigChatChannel {
     }
 
     @Override
-    public ChannelPermissionResult speechPermitted(final CarbonPlayer player) {
-        return channelPermissionResult(
+    public ChannelPermissions permissions() {
+        return ChannelPermissions.uniformDynamic(player -> channelPermissionResult(
             this.party(player) != null,
             () -> this.messages.cannotUseMcmmoPartyChannel(player)
-        );
-    }
-
-    @Override
-    public ChannelPermissionResult hearingPermitted(final CarbonPlayer player) {
-        return channelPermissionResult(
-            this.party(player) != null,
-            () -> this.messages.cannotUseMcmmoPartyChannel(player)
-        );
+        ));
     }
 
     @Override
@@ -106,7 +97,12 @@ public class McmmoPartyChannel extends ConfigChatChannel {
     }
 
     private @Nullable Party party(final CarbonPlayer player) {
-        return PartyManager.getParty(Bukkit.getPlayer(player.uuid()));
+        return com.gmail.nossr50.util.player.UserManager.getPlayer(Bukkit.getPlayer(player.uuid())).getParty();
+    }
+
+    @Override
+    public boolean shouldCrossServer() {
+        return false;
     }
 
 }
