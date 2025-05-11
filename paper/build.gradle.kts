@@ -3,9 +3,8 @@ import xyz.jpenilla.runpaper.task.RunServer
 
 plugins {
   id("carbon.shadow-platform")
-  id("xyz.jpenilla.resource-factory") version "1.2.0"
-  id("xyz.jpenilla.resource-factory-paper-convention") version "1.2.0"
-  id("xyz.jpenilla.resource-factory-bukkit-convention") version "1.2.0"
+  alias(libs.plugins.resource.factory.paper.convention)
+  alias(libs.plugins.resource.factory.bukkit.convention)
   id("xyz.jpenilla.run-paper")
   id("carbon.permissions")
   id("carbon.configurable-plugins")
@@ -62,7 +61,7 @@ tasks {
   withType(RunServer::class).configureEach {
     version.set(libs.versions.minecraft)
     downloadPlugins {
-      url("https://download.luckperms.net/1556/bukkit/loader/LuckPerms-Bukkit-5.4.141.jar")
+      url("https://download.luckperms.net/1575/bukkit/loader/LuckPerms-Bukkit-5.4.158.jar")
       github("MiniPlaceholders", "MiniPlaceholders", libs.versions.miniplaceholders.get(), "MiniPlaceholders-Paper-${libs.versions.miniplaceholders.get()}.jar")
       github("MiniPlaceholders", "PlaceholderAPI-Expansion", "1.2.0", "PlaceholderAPI-Expansion-1.2.0.jar")
       hangar("PlaceholderAPI", libs.versions.placeholderapi.get())
