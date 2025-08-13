@@ -2,18 +2,19 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 dependencyResolutionManagement {
   repositories {
-    mavenCentral()
+    mavenCentral {
+      mavenContent { releasesOnly() }
+    }
     maven("https://repo.jpenilla.xyz/snapshots/") {
       mavenContent {
         snapshotsOnly()
         includeModuleByRegex("de\\.hexaoxi", "messenger-.*")
         includeModule("org.incendo", "cloud-sponge")
+        includeModule("com.seiama", "registry")
+        includeModule("com.seiama", "event-api")
       }
     }
-    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-      mavenContent { snapshotsOnly() }
-    }
-    maven("https://oss.sonatype.org/content/repositories/snapshots/") {
+    maven("https://central.sonatype.com/repository/maven-snapshots/") {
       mavenContent { snapshotsOnly() }
     }
     // PaperMC
@@ -64,7 +65,7 @@ dependencyResolutionManagement {
 pluginManagement {
   repositories {
     gradlePluginPortal()
-    maven("https://oss.sonatype.org/content/repositories/snapshots/") {
+    maven("https://central.sonatype.com/repository/maven-snapshots/") {
       mavenContent { snapshotsOnly() }
     }
     maven("https://maven.fabricmc.net/")
@@ -77,7 +78,7 @@ pluginManagement {
 
 plugins {
   id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
-  id("quiet-fabric-loom") version "1.10-SNAPSHOT"
+  id("quiet-fabric-loom") version "1.11-SNAPSHOT"
 }
 
 rootProject.name = "CarbonChat"

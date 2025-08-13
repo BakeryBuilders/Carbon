@@ -58,13 +58,32 @@ tasks {
     relocateDependency("net.fabricmc.mappingio")
     relocateCloud()
   }
+  val luckperms = FetchLuckPermsJar.setup(project, "bukkit")
   withType(RunServer::class).configureEach {
-    version.set(libs.versions.minecraft)
+    version.set("1.21.4")
     downloadPlugins {
-      url("https://download.luckperms.net/1575/bukkit/loader/LuckPerms-Bukkit-5.4.158.jar")
       github("MiniPlaceholders", "MiniPlaceholders", libs.versions.miniplaceholders.get(), "MiniPlaceholders-Paper-${libs.versions.miniplaceholders.get()}.jar")
       github("MiniPlaceholders", "PlaceholderAPI-Expansion", "1.2.0", "PlaceholderAPI-Expansion-1.2.0.jar")
       hangar("PlaceholderAPI", libs.versions.placeholderapi.get())
+    }
+    pluginJars.from(luckperms.flatMap { it.outputFile })
+    providers.gradleProperty("smokeTest").map { it.toBoolean() }.getOrElse(false).let { smokeTest ->
+      if (smokeTest) {
+        runDirectory.set(layout.buildDirectory.dir("tmp/smokeTest"))
+        doFirst {
+          runDirectory.get().file("carbonchat-smoketest").asFile.takeIf { it.exists() }?.delete()
+          runDirectory.get().file("eula.txt").asFile.also { it.parentFile.mkdirs() }.writeText("eula=true")
+        }
+        doLast {
+          val pass = runDirectory.get().file("carbonchat-smoketest").asFile.exists()
+          if (!pass) {
+            throw GradleException("Smoke test failed, please check the logs.")
+          }
+        }
+        systemProperty("carbonchat.smokeTest", true)
+        systemProperty("carbonchat.smokeTestMode", providers.gradleProperty("smokeTestMode").getOrElse("h2"))
+        systemProperty("paper.disablePluginRemapping", true)
+      }
     }
   }
   register<RunServer>("runServer2") {
@@ -79,7 +98,7 @@ paperPluginYaml {
   name = rootProject.name
   loader = "net.draycia.carbon.paper.CarbonPaperLoader"
   main = "net.draycia.carbon.paper.CarbonPaperBootstrap"
-  apiVersion = "1.20"
+  apiVersion = "1.21.4"
   authors = listOf("Draycia", "jmp")
   website = GITHUB_REPO_URL
   foliaSupported = true
@@ -102,7 +121,7 @@ paperPluginYaml {
 bukkitPluginYaml {
   name = rootProject.name
   main = "carbonchat.libs.io.papermc.papertrail.RequiresPaperPlugins"
-  apiVersion = "1.20"
+  apiVersion = "1.21.4"
   authors = listOf("Draycia", "jmp")
   website = GITHUB_REPO_URL
 }

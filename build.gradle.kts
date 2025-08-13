@@ -1,7 +1,7 @@
 plugins {
   id("carbon.build-logic")
   alias(libs.plugins.hangar.publish)
-  alias(libs.plugins.indra.publishing.sonatype)
+  alias(libs.plugins.cloud.buildLogic.rootProject.publishing)
 }
 
 val projectVersion: String by project // get from gradle.properties
@@ -18,7 +18,7 @@ hangarPublish.publications.register("plugin") {
   apiKey = providers.environmentVariable("HANGAR_UPLOAD_KEY")
   platforms.paper {
     jar = project(":carbonchat-paper").platformJar()
-    platformVersions.add("1.21.1-1.21.5")
+    platformVersions.add("1.21.4-1.21.8")
     dependencies {
       url("LuckPerms", "https://luckperms.net/")
       hangar("Essentials") {
@@ -48,8 +48,4 @@ hangarPublish.publications.register("plugin") {
       }
     }
   }
-}
-
-indraSonatype {
-  useAlternateSonatypeOSSHost("s01")
 }
