@@ -23,16 +23,17 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.miniplaceholders.api.MiniPlaceholders;
 import net.draycia.carbon.common.config.ConfigManager;
+import net.draycia.carbon.common.integration.miniplaceholders.MiniPlaceholdersIntegration;
 import net.draycia.carbon.common.integration.miniplaceholders.MiniPlaceholdersUtil;
 import net.draycia.carbon.common.messages.CarbonMessageRenderer;
 import net.draycia.carbon.common.messages.RenderForTagResolver;
 import net.draycia.carbon.common.messages.SourcedAudience;
-import net.fabricmc.loader.api.FabricLoader;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
@@ -55,17 +56,23 @@ public class FabricMessageRenderer extends CarbonMessageRenderer {
     ) {
         final String placeholderResolvedMessage = this.configManager.primaryConfig().applyCustomPlaceholders(intermediateMessage);
 
-        if (FabricLoader.getInstance().isModLoaded("miniplaceholders")) {
+        final MiniPlaceholdersIntegration.@Nullable Config miniplaceholdersConfig = MiniPlaceholdersUtil.miniPlaceholdersLoaded()
+            ? this.configManager.primaryConfig().integrations().config(MiniPlaceholdersIntegration.configMeta())
+            : null;
+
+        if (miniplaceholdersConfig != null) {
             tagResolver.resolver(MiniPlaceholders.globalPlaceholders());
 
             if (receiver instanceof SourcedAudience) {
                 tagResolver.resolver(MiniPlaceholders.audiencePlaceholders());
-                tagResolver.resolver(MiniPlaceholders.relationalPlaceholders());
+                if (miniplaceholdersConfig.relationalPlaceholders) {
+                    tagResolver.resolver(MiniPlaceholders.relationalPlaceholders());
+                }
             }
         }
 
         final Audience parseAudience = receiver instanceof SourcedAudience sourced
-            ? MiniPlaceholdersUtil.wrapAudiences(sourced.recipient(), sourced.sender())
+            ? MiniPlaceholdersUtil.wrapAudiences(miniplaceholdersConfig, sourced.recipient(), sourced.sender())
             : receiver;
 
         return MiniMessage.miniMessage().deserialize(placeholderResolvedMessage, parseAudience, tagResolver.build());

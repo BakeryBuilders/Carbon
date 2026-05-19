@@ -20,66 +20,77 @@
 package net.draycia.carbon.common.command.commands;
 
 import com.google.inject.Inject;
+import java.util.Locale;
+import net.draycia.carbon.api.CarbonServer;
 import net.draycia.carbon.api.users.CarbonPlayer;
 import net.draycia.carbon.common.command.CarbonCommand;
 import net.draycia.carbon.common.command.CommandSettings;
 import net.draycia.carbon.common.command.Commander;
-import net.draycia.carbon.common.command.PlayerCommander;
 import net.draycia.carbon.common.messages.CarbonMessages;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.parser.standard.StringParser;
 
 import static org.incendo.cloud.minecraft.extras.RichDescription.richDescription;
-import static org.incendo.cloud.parser.standard.BooleanParser.booleanParser;
 
 @DefaultQualifier(NonNull.class)
-public final class FilterCommand extends CarbonCommand {
+public final class RealNameCommand extends CarbonCommand {
 
     private final CommandManager<Commander> commandManager;
     private final CarbonMessages carbonMessages;
+    private final CarbonServer server;
 
     @Inject
-    public FilterCommand(
+    public RealNameCommand(
         final CommandManager<Commander> commandManager,
-        final CarbonMessages carbonMessages
+        final CarbonMessages carbonMessages,
+        final CarbonServer server
     ) {
         this.commandManager = commandManager;
         this.carbonMessages = carbonMessages;
+        this.server = server;
     }
 
     @Override
     public CommandSettings defaultCommandSettings() {
-        return new CommandSettings("filter");
+        return new CommandSettings("realname", "rn");
     }
 
     @Override
     public Key key() {
-        return Key.key("carbon", "filter");
+        return Key.key("carbon", "realname");
     }
 
     @Override
     public void init() {
         final var command = this.commandManager.commandBuilder(this.commandSettings().name(), this.commandSettings().aliases())
-            .optional("enabled", booleanParser())
-            .permission("carbon.filter")
-            .senderType(PlayerCommander.class)
-            .commandDescription(richDescription(this.carbonMessages.commandOptionalFilterDescription()))
+            .required("player", StringParser.greedyStringParser(),
+                richDescription(this.carbonMessages.commandRealNameArgumentPlayer()))
+            .permission("carbon.realname")
+            .senderType(Commander.class)
+            .commandDescription(richDescription(this.carbonMessages.commandRealNameDescription()))
             .handler(handler -> {
-                final CarbonPlayer sender = handler.sender().carbonPlayer();
+                final String input = handler.<String>get("player").split(" ")[0].toLowerCase(Locale.ENGLISH);
+                boolean found = false;
 
-                boolean enabled = !sender.applyOptionalChatFilters();
+                for (final CarbonPlayer player : this.server.players()) {
+                    if (player.vanished() && !handler.sender().hasPermission("carbon.realname.vanished")) {
+                        continue;
+                    }
 
-                if (handler.contains("enabled")) {
-                    enabled = handler.get("enabled");
+                    final String plainName = PlainTextComponentSerializer.plainText().serialize(player.displayName()).toLowerCase(Locale.ENGLISH);
+
+                    if (plainName.contains(input)) {
+                        found = true;
+                        this.carbonMessages.realName(handler.sender(), player.displayName(), player.username());
+                    }
                 }
 
-                sender.applyOptionalChatFilters(enabled);
-                if (enabled) {
-                    this.carbonMessages.commandOptionalFilterEnabled(sender);
-                } else {
-                    this.carbonMessages.commandOptionalFilterDisabled(sender);
+                if (!found) {
+                    this.carbonMessages.realNameTargetInvalid(handler.sender(), input);
                 }
             })
             .build();
