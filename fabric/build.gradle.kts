@@ -5,11 +5,11 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 plugins {
   id("carbon.shadow-platform")
-  id("quiet-fabric-loom")
+  id("xyz.jpenilla.quiet-fabric-loom")
   alias(libs.plugins.resource.factory.fabric.convention)
 }
 
-val shade: Configuration by configurations.creating
+val shade: Configuration = configurations.create("shade")
 
 configurations.implementation {
   extendsFrom(shade)
@@ -17,10 +17,9 @@ configurations.implementation {
 
 dependencies {
   minecraft(libs.fabricMinecraft)
-  mappings(loom.officialMojangMappings())
-  modImplementation(libs.fabricLoader)
-  modImplementation(libs.fabricApi)
-  modRuntimeOnly(libs.fabricApiDeprecated) // LuckPerms needs to work at dev time
+  implementation(libs.fabricLoader)
+  implementation(libs.fabricApi)
+  runtimeOnly(libs.fabricApiDeprecated) // LuckPerms needs to work at dev time
 
   shade(projects.carbonchatCommon) {
     exclude("net.kyori", "adventure-api")
@@ -33,18 +32,17 @@ dependencies {
     exclude("io.leangen.geantyref")
   }
 
-  modImplementation(libs.cloudFabric) {
+  implementation(libs.cloudFabric) {
     exclude("net.fabricmc.fabric-api")
   }
-  include(libs.cloudFabric)
   implementation(libs.cloudSigned)
   include(libs.cloudSigned)
-  modImplementation(libs.fabricPermissionsApi)
+  implementation(libs.fabricPermissionsApi)
   include(libs.fabricPermissionsApi)
 
-  modImplementation(libs.adventurePlatformFabric)
+  implementation(libs.adventurePlatformFabric)
 
-  modImplementation(libs.miniplaceholders)
+  implementation(libs.miniplaceholders)
 
   runtimeDownload(libs.mysql)
   include(libs.jarRelocator)
@@ -79,8 +77,14 @@ fabricModJson {
   suggests("miniplaceholders", "*")
 }
 
+indra {
+  javaVersions {
+    target(25)
+  }
+}
+
 carbonPlatform {
-  productionJar = tasks.remapJar.flatMap { it.archiveFile }
+  productionJar = tasks.shadowJar.flatMap { it.archiveFile }
 }
 
 tasks {
@@ -114,8 +118,9 @@ tasks {
 
 publishMods.modrinth {
   environment = ModrinthEnvironment.SERVER_ONLY
-  minecraftVersions.set(listOf(libs.versions.minecraft.get()))
+  minecraftVersions.set(listOf("26.1.2", "26.2", "26.3"))
   modLoaders.addAll("fabric")
   requires("fabric-api")
   requires("adventure-platform-mod")
+  requires("cloud-minecraft-modded")
 }
